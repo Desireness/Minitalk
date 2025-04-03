@@ -45,27 +45,60 @@
 
 //El que deberia de funcionar
 
-void	signal_handler(int signum, siginfo_t *info, void *context)
+/*void signal_handler(int signum, siginfo_t *info, void *context)
 {
-	static char	c = 0;
-	static int	bit = 0;
+	static char c = 0;
+	static int bit = 0;
 
 	(void)context;
 	if (signum == SIGUSR2) // SIGUSR2 representa un '1'
 		c |= (1 << (7 - bit));
 	bit++;
-
-	if (bit == 8) // Byte completo recibido
+	if (bit == 8)
 	{
 		write(1, &c, 1);
 		if (c == '\0') // Fin de mensaje
 			write(1, "\n", 1);
-
-		kill(info->si_pid, SIGUSR1);
-
 		c = 0;
 		bit = 0;
 	}
+	// ✅ Enviar confirmación al cliente después de cada bit recibido
+	kill(info->si_pid, SIGUSR1);
+}*/
+
+
+void signal_handler(int signum, siginfo_t *info, void *context)
+{
+	static char	c = 0;
+	static int	bit = 0;
+	static pid_t sender_pid = 0;
+
+	(void)context;
+
+	// Si es la primera señal, guardamos el PID del cliente
+	if (!sender_pid)
+		sender_pid = info->si_pid;
+
+	if (signum == SIGUSR2) // Recibe un '1'
+		c |= (1 << (7 - bit));
+
+	bit++;
+
+	if (bit == 8) // Se ha recibido un carácter completo
+	{
+		write(1, &c, 1);
+		if (c == '\0') // Fin de mensaje
+		{
+			write(1, "\n", 1);
+			sender_pid = 0; // Resetear para aceptar un nuevo cliente
+		}
+		c = 0;
+		bit = 0;
+	}
+
+	// ✅ Solo enviar ACK si `sender_pid` es válido
+	if (sender_pid)
+		kill(sender_pid, SIGUSR1);
 }
 
 
