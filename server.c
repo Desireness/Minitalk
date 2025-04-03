@@ -12,6 +12,8 @@
 
 #include "minitalk.h"
 
+
+// El basico
 /*void	signal_handler(int signum)
 {
 	if (signum == SIGUSR1)
@@ -20,8 +22,8 @@
 		printf("Recibida la señal sigusr2!\n");
 }*/
 
-
-void	signal_handler(int signum)
+//El que funciona a medias
+/*void	signal_handler(int signum)
 {
 	static	char c;
 	static	int bit;
@@ -36,6 +38,31 @@ void	signal_handler(int signum)
 		write (1, &c, 1);
 		if (c == '\0')
 			write(1, "\n", 1);
+		c = 0;
+		bit = 0;
+	}
+}*/
+
+//El que deberia de funcionar
+
+void	signal_handler(int signum, siginfo_t *info, void *context)
+{
+	static char	c = 0;
+	static int	bit = 0;
+
+	(void)context;
+	if (signum == SIGUSR2) // SIGUSR2 representa un '1'
+		c |= (1 << (7 - bit));
+	bit++;
+
+	if (bit == 8) // Byte completo recibido
+	{
+		write(1, &c, 1);
+		if (c == '\0') // Fin de mensaje
+			write(1, "\n", 1);
+
+		kill(info->si_pid, SIGUSR1);
+
 		c = 0;
 		bit = 0;
 	}
@@ -66,10 +93,26 @@ void	binary_sigsur(char *msg, int pid)
 
 int	main(void)
 {
+	struct sigaction sa;
+
+	printf("Servidor en marcha. PID: %d\n", getpid());
+
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = signal_handler;
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+
+	while (1)
+		pause();
+	return (0);
+}
+
+/*int	main(void)
+{
 	printf ("Servidor en marcha. PID: %d\n", getpid());
 	signal (SIGUSR1, signal_handler);
 	signal (SIGUSR2, signal_handler);
 	while (1)
 		pause();
 	return (0);
-}
+}*/

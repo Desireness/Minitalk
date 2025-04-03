@@ -12,7 +12,59 @@
 
 #include "minitalk.h"
 
-int main(int ac, char **av)
+void ack_handler(int signum)
+{
+    (void)signum;
+}
+
+void	send_char(int pid, unsigned char c)
+{
+	int bit = 7;
+	while (bit >= 0)
+	{
+		if ((c >> bit) & 1)
+			kill(pid, SIGUSR2); // Enviar '1'
+		else
+			kill(pid, SIGUSR1); // Enviar '0'
+		usleep(3000);
+		bit--;
+	}
+}
+
+int	main(int ac, char **av)
+{
+	int		server_pid;
+	char	*message;
+	int		i;
+
+	if (ac != 3)
+	{
+		printf("Uso: %s <PID> <mensaje>\n", av[0]);
+		return (1);
+	}
+
+	server_pid = atoi(av[1]);
+	message = av[2];
+
+	// Configurar el manejador de señal para ACK
+	signal(SIGUSR1, ack_handler);
+
+	// Enviar el mensaje carácter por carácter
+	i = 0;
+	while (message[i])
+	{
+		send_char(server_pid, message[i]);
+		i++;
+	}
+
+	send_char(server_pid, '\n');  // Enviar '\n' para separar mensajes
+	send_char(server_pid, '\0');  // Enviar '\0' para indicar fin de transmisión
+
+	printf("Mensaje enviado a %d\n", server_pid);
+	return (0);
+}
+
+/*int main(int ac, char **av)
 {
     if (ac != 3)
     {
@@ -43,7 +95,7 @@ int main(int ac, char **av)
 
     printf("Mensaje enviado a %d\n", server_pid);
     return (0);
-}
+}*/
 
 
 //Main antiguo, solo se comprueban las señales

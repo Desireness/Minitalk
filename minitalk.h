@@ -23,7 +23,7 @@
 #include <signal.h>
 
 
-void	signal_handler(int signum);
+void	signal_handler(int signum, siginfo_t *info, void *context);
 
 void	asciibinary(unsigned char c, char *binary, unsigned char mask, int i);
 void	string_to_binary_recursive(const char *str, char *result);
