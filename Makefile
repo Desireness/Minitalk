@@ -2,13 +2,12 @@ CC = cc
 CFLAGS = -Wall -Wextra -Werror -g
 
 # Archivos fuente
-SRC_SERVER = server.c
+SRC_SERVER = server.c ascii_to_binary.c
 SRC_CLIENT = client.c
-
+SRC_REST = ascii_to_binary.c
 # Archivos objeto
 OBJ_SERVER = $(SRC_SERVER:.c=.o)
 OBJ_CLIENT = $(SRC_CLIENT:.c=.o)
-
 # Nombre de los ejecutables
 NAME_SERVER = server
 NAME_CLIENT = client
